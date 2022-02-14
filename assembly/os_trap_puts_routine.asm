@@ -1,0 +1,5 @@
+    .ORIG x00D0
+    TRAP xFF
+LOOP_PUTS
+    BR LOOP_PUTS
+    .END
