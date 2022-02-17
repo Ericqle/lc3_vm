@@ -69,7 +69,8 @@ enum
 enum
 {
     MR_KBSR = 0xFE00, /* keyboard status */
-    MR_KBDR = 0xFE02  /* keyboard data */
+    MR_KBDR = 0xFE02,  /* keyboard data */
+    MR_SM = 0xFE04
 };
 
 /* TRAP Codes */
@@ -111,7 +112,7 @@ void dump_mem_to_txt(){
         mem_file << "M" << to_string(i) << ": " << to_string(memory[i]) << "\n";
     }
 
-    if (file_num <= 30) file_num++;
+    if (file_num <= 20) file_num++;
 
     mem_file.close();
 
@@ -194,11 +195,6 @@ uint16_t check_key()
 }
 
 /* Memory Access */
-void mem_write(uint16_t address, uint16_t val)
-{
-    memory[address] = val;
-}
-
 uint16_t mem_read(uint16_t address)
 {
     if (address == MR_KBSR)
@@ -214,6 +210,23 @@ uint16_t mem_read(uint16_t address)
         }
     }
     return memory[address];
+}
+
+void mem_write(uint16_t address, uint16_t val)
+{
+//    printf("Address write location: %u\n",address);
+    if (address == MR_SM)
+    {
+        if (mem_read(MR_SM) == 0x0001)
+            memory[address] = val;
+        else
+        {
+            puts("User Mode trying to write to MR_SM, DUMPING");
+            dump_mem_to_txt();
+        }
+    }
+    else
+        memory[address] = val;
 }
 
 /* Input Buffering */
@@ -459,7 +472,9 @@ int main(int argc, const char* argv[])
                 {
                     case TRAP_GETC:
                         /* TRAP GETC */
-                        /* read a single ASCII char */
+                        /* Switch VM to kernel mode regardless of MR_SM's state*/
+                        memory[MR_SM] = 0x0001;
+
                         reg[R_R7] = reg[R_PC];
                         reg[R_PC] = mem_read(TRAP_GETC);
                         puts("TRAP_GETC");
@@ -469,6 +484,9 @@ int main(int argc, const char* argv[])
                         break;
                     case TRAP_OUT:
                         /* TRAP OUT */
+                        /* Switch VM to kernel mode regardless of MR_SM's state*/
+                        memory[MR_SM] = 0x0001;
+
                         reg[R_R7] = reg[R_PC];
                         reg[R_PC] = mem_read(TRAP_OUT);
                         puts("TRAP_OUT");
@@ -478,6 +496,9 @@ int main(int argc, const char* argv[])
                         break;
                     case TRAP_PUTS:
                         /* TRAP PUTS */
+                        /* Switch VM to kernel mode regardless of MR_SM's state*/
+                        memory[MR_SM] = 0x0001;
+
                         reg[R_R7] = reg[R_PC];
                         reg[R_PC] = mem_read(TRAP_PUTS);
                         puts("TRAP_PUTS");
@@ -495,6 +516,9 @@ int main(int argc, const char* argv[])
                         break;
                     case TRAP_IN:
                         /* TRAP IN */
+                        /* Switch VM to kernel mode regardless of MR_SM's state*/
+                        memory[MR_SM] = 0x0001;
+
                         reg[R_R7] = reg[R_PC];
                         reg[R_PC] = mem_read(TRAP_IN);
                         puts("TRAP_IN");
@@ -510,6 +534,9 @@ int main(int argc, const char* argv[])
                         break;
                     case TRAP_PUTSP:
                         /* TRAP PUTSP */
+                        /* Switch VM to kernel mode regardless of MR_SM's state*/
+                        memory[MR_SM] = 0x0001;
+
                         reg[R_R7] = reg[R_PC];
                         reg[R_PC] = mem_read(TRAP_PUTSP);
                         puts("TRAP_PUTSP");
@@ -532,6 +559,9 @@ int main(int argc, const char* argv[])
                         break;
                     case TRAP_HALT:
                         /* TRAP HALT */
+                        /* Switch VM to kernel mode regardless of MR_SM's state*/
+                        memory[MR_SM] = 0x0001;
+
                         reg[R_R7] = reg[R_PC];
                         reg[R_PC] = mem_read(TRAP_HALT);
                         puts("TRAP_HALT");
@@ -541,6 +571,9 @@ int main(int argc, const char* argv[])
                         break;
 
                     case TRAP_YIELD:
+                        /* Switch VM to kernel mode regardless of MR_SM's state*/
+                        memory[MR_SM] = 0x0001;
+
                         reg[R_R7] = reg[R_PC];
                         reg[R_PC] = mem_read(TRAP_YIELD);
                         puts("TRAP_YIELD");

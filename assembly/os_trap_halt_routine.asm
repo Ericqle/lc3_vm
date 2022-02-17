@@ -46,6 +46,9 @@ PROCESS_5_NOT_RUNNING
     AND R6, R6, #0
     ADD R6, R6, #2
 
+    ; hold 0 in R5 for writing a change to user mode
+    AND R5, R5, #0
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ; find next ready process and run
     ;   set status to running
@@ -69,11 +72,13 @@ PROCESS_5_NOT_RUNNING
     AND R0, R0, #0
     STI R0, PROCESS_1_YIELDED   ; set yielded state to 0
     TRAP xFF                    ; dump memory before process switch
+    STI R5, MR_SM_REF           ; change to user mode
     STI R6, PROCESS_1_STATUS    ; change process to running
     JMP R7                      ; jump to process where left off
 PROCESS_1_NOT_YIELDING
     LDI R0, PROCESS_1_ADDR      ; load process address
     TRAP xFF                    ; dump memory before process switch
+    STI R5, MR_SM_REF           ; change to user mode
     STI R6, PROCESS_1_STATUS    ; change process to running
     JMP R0                      ; jump to process
 PROCESS_1_NOT_WAITING
@@ -89,11 +94,13 @@ PROCESS_1_NOT_WAITING
     AND R0, R0, #0
     STI R0, PROCESS_2_YIELDED
     TRAP xFF
+    STI R5, MR_SM_REF
     STI R6, PROCESS_2_STATUS
     JMP R7
 PROCESS_2_NOT_YIELDING
     LDI R0, PROCESS_2_ADDR
     TRAP xFF
+    STI R5, MR_SM_REF
     STI R6, PROCESS_2_STATUS
     JMP R0
 PROCESS_2_NOT_WAITING
@@ -109,11 +116,13 @@ PROCESS_2_NOT_WAITING
     AND R0, R0, #0
     STI R0, PROCESS_3_YIELDED
     TRAP xFF
+    STI R5, MR_SM_REF
     STI R6, PROCESS_3_STATUS
     JMP R7
 PROCESS_3_NOT_YIELDING
     LDI R0, PROCESS_3_ADDR
     TRAP xFF
+    STI R5, MR_SM_REF
     STI R6, PROCESS_3_STATUS
     JMP R0
 PROCESS_3_NOT_WAITING
@@ -129,11 +138,13 @@ PROCESS_3_NOT_WAITING
     AND R0, R0, #0
     STI R0, PROCESS_4_YIELDED
     TRAP xFF
+    STI R5, MR_SM_REF
     STI R6, PROCESS_4_STATUS
     JMP R7
 PROCESS_4_NOT_YIELDING
     LDI R0, PROCESS_4_ADDR
     TRAP xFF
+    STI R5, MR_SM_REF
     STI R6, PROCESS_4_STATUS
     JMP R0
 PROCESS_4_NOT_WAITING
@@ -149,11 +160,13 @@ PROCESS_4_NOT_WAITING
     AND R0, R0, #0
     STI R0, PROCESS_5_YIELDED
     TRAP xFF
+    STI R5, MR_SM_REF
     STI R6, PROCESS_5_STATUS
     JMP R7
 PROCESS_5_NOT_YIELDING
     LDI R0, PROCESS_5_ADDR
     TRAP xFF
+    STI R5, MR_SM_REF
     STI R6, PROCESS_5_STATUS
     JMP R0
 PROCESS_5_NOT_WAITING
@@ -196,5 +209,6 @@ LOOP_HALT
     PROCESS_4_R7_STATE .fill x0217
     PROCESS_5_R7_STATE .fill x0218
 
+    MR_SM_REF .fill xFE04
 
     .END

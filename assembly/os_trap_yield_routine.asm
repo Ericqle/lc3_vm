@@ -1,4 +1,4 @@
-    .ORIG x0190
+    .ORIG x01B0
 
     ; hold constants 1 in R6 for state change
     AND R6, R6, #0
