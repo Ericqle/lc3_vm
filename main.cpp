@@ -70,7 +70,8 @@ enum
 {
     MR_KBSR = 0xFE00, /* keyboard status */
     MR_KBDR = 0xFE02,  /* keyboard data */
-    MR_SM = 0xFE04
+    MR_SM = 0xFE04, /* kernal/user mode status */
+    MR_MPU = 0xFE06 /* memory protection unit status */
 };
 
 /* TRAP Codes */
@@ -212,18 +213,61 @@ uint16_t mem_read(uint16_t address)
     return memory[address];
 }
 
+bool mpu_check(uint16_t address)
+{
+    bool valid_writing_range = false;
+    uint16_t lower_bound = 0x0000;
+    uint16_t upper_bound = 0x0000;
+
+    switch (mem_read(MR_MPU)) {
+        case 0x0000:
+            lower_bound = 0x0000;
+            upper_bound = 0xFFFF;
+            break;
+        case 0x0001:
+            lower_bound = 0x4000;
+            upper_bound = 0x4FFF;
+            break;
+        case 0x0002:
+            lower_bound = 0x5000;
+            upper_bound = 0x5FFF;
+            break;
+        case 0x0003:
+            lower_bound = 0x6000;
+            upper_bound = 0x6FFF;
+            break;
+        case 0x0004:
+            lower_bound = 0x7000;
+            upper_bound = 0x7FFF;
+            break;
+        case 0x0005:
+            lower_bound = 0x8000;
+            upper_bound = 0x8FFF;
+            break;
+    }
+
+    if ((address > lower_bound) && (address < upper_bound))
+        valid_writing_range = true;
+
+    return valid_writing_range;
+}
+
 void mem_write(uint16_t address, uint16_t val)
 {
-//    printf("Address write location: %u\n",address);
     if (address == MR_SM)
     {
         if (mem_read(MR_SM) == 0x0001)
             memory[address] = val;
         else
         {
-            puts("User Mode trying to write to MR_SM, DUMPING");
+            puts("ERROR: User Mode trying to write to MR_SM, DUMP");
             dump_mem_to_txt();
         }
+    }
+    else if (!mpu_check(address))
+    {
+        uint16_t process_num = mem_read(MR_MPU);
+        printf("ERROR: Process %d Invalid Memory Access\n", process_num);
     }
     else
         memory[address] = val;
@@ -471,108 +515,76 @@ int main(int argc, const char* argv[])
                 switch (instr & 0xFF)
                 {
                     case TRAP_GETC:
-                        /* TRAP GETC */
                         /* Switch VM to kernel mode regardless of MR_SM's state*/
                         memory[MR_SM] = 0x0001;
+                        /* Set MPU state back to 0*/
+                        memory[MR_MPU] = 0x0000;
 
                         reg[R_R7] = reg[R_PC];
                         reg[R_PC] = mem_read(TRAP_GETC);
                         puts("TRAP_GETC");
-//                        reg[R_R0] = (uint16_t)getchar();
-//                        update_flags(R_R0);
-
                         break;
+
                     case TRAP_OUT:
-                        /* TRAP OUT */
                         /* Switch VM to kernel mode regardless of MR_SM's state*/
                         memory[MR_SM] = 0x0001;
+                        /* Set MPU state back to 0*/
+                        memory[MR_MPU] = 0x0000;
 
                         reg[R_R7] = reg[R_PC];
                         reg[R_PC] = mem_read(TRAP_OUT);
                         puts("TRAP_OUT");
-//                        putc((char)reg[R_R0], stdout);
-//                        fflush(stdout);
-
                         break;
+
                     case TRAP_PUTS:
-                        /* TRAP PUTS */
                         /* Switch VM to kernel mode regardless of MR_SM's state*/
                         memory[MR_SM] = 0x0001;
+                        /* Set MPU state back to 0*/
+                        memory[MR_MPU] = 0x0000;
 
                         reg[R_R7] = reg[R_PC];
                         reg[R_PC] = mem_read(TRAP_PUTS);
                         puts("TRAP_PUTS");
-//                    {
-//                        /* one char per word */
-//                        uint16_t* c = memory + reg[R_R0];
-//                        while (*c)
-//                        {
-//                            putc((char)*c, stdout);
-//                            ++c;
-//                        }
-//                        fflush(stdout);
-//                    }
-
                         break;
+
                     case TRAP_IN:
-                        /* TRAP IN */
                         /* Switch VM to kernel mode regardless of MR_SM's state*/
                         memory[MR_SM] = 0x0001;
+                        /* Set MPU state back to 0*/
+                        memory[MR_MPU] = 0x0000;
 
                         reg[R_R7] = reg[R_PC];
                         reg[R_PC] = mem_read(TRAP_IN);
                         puts("TRAP_IN");
-//                    {
-//                        printf("Enter a character: ");
-//                        char c = getchar();
-//                        putc(c, stdout);
-//                        fflush(stdout);
-//                        reg[R_R0] = (uint16_t)c;
-//                        update_flags(R_R0);
-//                    }
-
                         break;
+
                     case TRAP_PUTSP:
-                        /* TRAP PUTSP */
                         /* Switch VM to kernel mode regardless of MR_SM's state*/
                         memory[MR_SM] = 0x0001;
+                        /* Set MPU state back to 0*/
+                        memory[MR_MPU] = 0x0000;
 
                         reg[R_R7] = reg[R_PC];
                         reg[R_PC] = mem_read(TRAP_PUTSP);
                         puts("TRAP_PUTSP");
-//                    {
-//                        /* one char per byte (two bytes per word)
-//                           here we need to swap back to
-//                           big endian format */
-//                        uint16_t* c = memory + reg[R_R0];
-//                        while (*c)
-//                        {
-//                            char char1 = (*c) & 0xFF;
-//                            putc(char1, stdout);
-//                            char char2 = (*c) >> 8;
-//                            if (char2) putc(char2, stdout);
-//                            ++c;
-//                        }
-//                        fflush(stdout);
-//                    }
-
                         break;
+
                     case TRAP_HALT:
-                        /* TRAP HALT */
                         /* Switch VM to kernel mode regardless of MR_SM's state*/
                         memory[MR_SM] = 0x0001;
+                        /* Set MPU state back to 0*/
+                        memory[MR_MPU] = 0x0000;
 
                         reg[R_R7] = reg[R_PC];
                         reg[R_PC] = mem_read(TRAP_HALT);
                         puts("TRAP_HALT");
-//                        puts("HALT");
-//                        fflush(stdout);
-//                        running = 0;
                         break;
 
                     case TRAP_YIELD:
                         /* Switch VM to kernel mode regardless of MR_SM's state*/
                         memory[MR_SM] = 0x0001;
+                        /* Set MPU state back to 0*/
+                        memory[MR_MPU] = 0x0000;
 
                         reg[R_R7] = reg[R_PC];
                         reg[R_PC] = mem_read(TRAP_YIELD);
