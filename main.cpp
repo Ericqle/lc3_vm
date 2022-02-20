@@ -113,7 +113,7 @@ void dump_mem_to_txt(){
         mem_file << "M" << to_string(i) << ": " << to_string(memory[i]) << "\n";
     }
 
-    if (file_num <= 20) file_num++;
+    if (file_num <= 25) file_num++;
 
     mem_file.close();
 
@@ -225,22 +225,26 @@ bool mpu_check(uint16_t address)
             upper_bound = 0xFFFF;
             break;
         case 0x0001:
+            lower_bound = 0x3000;
+            upper_bound = 0x3FFF;
+            break;
+        case 0x0002:
             lower_bound = 0x4000;
             upper_bound = 0x4FFF;
             break;
-        case 0x0002:
+        case 0x0003:
             lower_bound = 0x5000;
             upper_bound = 0x5FFF;
             break;
-        case 0x0003:
+        case 0x0004:
             lower_bound = 0x6000;
             upper_bound = 0x6FFF;
             break;
-        case 0x0004:
+        case 0x0005:
             lower_bound = 0x7000;
             upper_bound = 0x7FFF;
             break;
-        case 0x0005:
+        case 0x0006:
             lower_bound = 0x8000;
             upper_bound = 0x8FFF;
             break;
@@ -254,7 +258,14 @@ bool mpu_check(uint16_t address)
 
 void mem_write(uint16_t address, uint16_t val)
 {
-    if (address == MR_SM)
+    if (!mpu_check(address))
+    {
+        uint16_t process_num = mem_read(MR_MPU);
+        process_num--;
+        printf("ERROR: Process %d Invalid Memory Access, DUMP\n", process_num);
+        dump_mem_to_txt();
+    }
+    else if (address == MR_SM)
     {
         if (mem_read(MR_SM) == 0x0001)
             memory[address] = val;
@@ -264,11 +275,7 @@ void mem_write(uint16_t address, uint16_t val)
             dump_mem_to_txt();
         }
     }
-    else if (!mpu_check(address))
-    {
-        uint16_t process_num = mem_read(MR_MPU);
-        printf("ERROR: Process %d Invalid Memory Access\n", process_num);
-    }
+
     else
         memory[address] = val;
 }

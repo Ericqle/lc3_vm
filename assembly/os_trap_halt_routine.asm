@@ -66,7 +66,7 @@ PROCESS_5_NOT_RUNNING
     ;   instead jump to address in saved state of R7
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     AND R4, R4, #0
-    ADD R4, R4, #1              ; init mpu state
+    ADD R4, R4, #2              ; init mpu state
     LDI R0, PROCESS_1_STATUS
     ADD R0, R0, #-1
     BRnp PROCESS_1_NOT_WAITING  ; branch if not ready
@@ -92,7 +92,7 @@ PROCESS_1_NOT_YIELDING
 PROCESS_1_NOT_WAITING
 
     AND R4, R4, #0
-    ADD R4, R4, #2
+    ADD R4, R4, #3
     LDI R0, PROCESS_2_STATUS
     ADD R0, R0, #-1
     BRnp PROCESS_2_NOT_WAITING
@@ -118,7 +118,7 @@ PROCESS_2_NOT_YIELDING
 PROCESS_2_NOT_WAITING
 
     AND R4, R4, #0
-    ADD R4, R4, #3
+    ADD R4, R4, #4
     LDI R0, PROCESS_3_STATUS
     ADD R0, R0, #-1
     BRnp PROCESS_3_NOT_WAITING
@@ -144,7 +144,7 @@ PROCESS_3_NOT_YIELDING
 PROCESS_3_NOT_WAITING
 
     AND R4, R4, #0
-    ADD R4, R4, #4
+    ADD R4, R4, #5
     LDI R0, PROCESS_4_STATUS
     ADD R0, R0, #-1
     BRnp PROCESS_4_NOT_WAITING
@@ -170,7 +170,7 @@ PROCESS_4_NOT_YIELDING
 PROCESS_4_NOT_WAITING
 
     AND R4, R4, #0
-    ADD R4, R4, #5
+    ADD R4, R4, #6
     LDI R0, PROCESS_5_STATUS
     ADD R0, R0, #-1
     BRnp PROCESS_5_NOT_WAITING
